@@ -4,17 +4,14 @@
 
 @section('conteudo')
 
-    <h1 style="text-align: center" class="mt-4">CineReview</h1>
-    <h5 style="text-align: center; border-bottom:solid black 1px; margin-left: 10%; margin-right: 10%  "
-        class="mt-3 mb-4 p-2">
-        Bem vindo, procure por filmes,
-        atores,
-        diretores, produtores, estúdios e faça sua
-        avalição!</h5>
+    <div style="text-align: center; border; margin: 5%;" class="shadow rounded p-3">
+
+        <h1 class="mt-4">CineReview</h1>
+        <h5 class="mt-3 mb-4 p-2">
+            Bem vindo, procure por filmes, atores, diretores, produtores, estúdios e faça sua avalição!</h5>
+    </div>
 
     @include('partials.carousel')
-
-
     @include('partials.cards-atores')
     @include('partials.cards-filmes')
 

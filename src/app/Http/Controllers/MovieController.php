@@ -3,20 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreFilmeRequest;
+use App\Http\Requests\UpdateFilmeRequest;
+use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MovieController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $filmes = Movie::orderBy('nome')->get();
-        return view("filmes.index", compact("filmes"));
+
+        $busca = trim($request->input('busca', ''));
+        $genero = $request->input('genero');
+        $ano = $request->input('ano');
+        $ordem = $request->input('ordem', 'nome');
+        $filmes = Movie::with(['genres'])
+            // Busca por título — só aplica se $busca não for vazio
+            ->when(
+                $busca,
+                fn($q) =>
+                $q->where('nome', 'ilike', "%{$busca}%")
+            )
+            // Filtro por gênero — só aplica se $genero não for nulo
+            ->when(
+                $genero,
+                fn($q) =>
+                $q->whereHas('genres', fn($g) => $g->where('genres.id', $genero))
+            )
+            // Filtro por ano — só aplica se $ano não for nulo
+            ->when(
+                $ano,
+                fn($q) =>
+                $q->where('data_lancamento', $ano)
+            )
+            // Ordenação dinâmica
+            ->when(
+                $ordem === 'ano',
+                fn($q) => $q->orderBy('data_lancamento', 'desc'),
+                fn($q) => $q->orderBy('nome')
+            )
+            ->paginate(12)
+            ->withQueryString(); // preserva os filtros nos links de paginação
+
+        $generos = Genre::orderBy('nome')->get();
+        return view('filmes.index', compact('filmes', 'generos'));
     }
 
     /**
@@ -24,7 +60,8 @@ class MovieController extends Controller
      */
     public function create()
     {
-        return view('filmes.create');
+        $generos = Genre::orderBy('nome')->get();
+        return view('filmes.create', compact('generos'));
     }
 
     /**
@@ -32,33 +69,67 @@ class MovieController extends Controller
      */
     public function store(StoreFilmeRequest $request)
     {
-        // Se chegou aqui, os dados são válidos
-        // $request->validated() retorna só os campos
-        // que passaram pelas regras — mais seguro
-        // do que $request->all()
+        // // Se chegou aqui, os dados são válidos
+        // // $request->validated() retorna só os campos
+        // // que passaram pelas regras — mais seguro
+        // // do que $request->all()
+        // $dados = $request->validated();
+
+        // // Remove poster dos dados do Movie
+        // unset($dados['poster']);
+
+        // $filme = Movie::create($dados);
+
+        // // Salva o arquivo e obtém o caminho relativo
+        // // Ex.: 'posters/AbCdEfGhIj1234.jpg'
+        // if ($request->hasFile('poster')) {
+        //     $caminho = $request->file('poster')
+        //         ->store('posters', 'public');
+
+        //     // Cria registro na tabela images
+        //     $imagem = Image::create([
+        //         'caminho' => $caminho,
+        //         'nome' => 'Poster de ' . $filme->nome
+        //     ]);
+
+        //     // Associa imagem ao filme
+        //     $filme->images()->attach($imagem->id);
+        // }
+
+
+        // return redirect('/filmes')->with('sucesso', 'Filme cadastrado!');
+
         $dados = $request->validated();
-
-        // Remove poster dos dados do Movie
-        unset($dados['poster']);
-
-        $filme = Movie::create($dados);
-
-        // Salva o arquivo e obtém o caminho relativo
-        // Ex.: 'posters/AbCdEfGhIj1234.jpg'
-        if ($request->hasFile('poster')) {
-            $caminho = $request->file('poster')
-                ->store('posters', 'public');
-
-            // Cria registro na tabela images
-            $imagem = Image::create([
-                'caminho' => $caminho,
-                'nome' => 'Poster de ' . $filme->nome
-            ]);
-
-            // Associa imagem ao filme
-            $filme->images()->attach($imagem->id);
+        $generos = $request->input('generos');
+        $posterIndex = $request->input('poster_index', 0);
+        $arquivos = $request->file('imagens', []);
+        $caminhos = [];
+        // Faz upload de todos os arquivos antes da transação
+        foreach ($arquivos as $arquivo) {
+            $caminhos[] = $arquivo->store('imagens', 'public');
         }
+        try {
+            DB::transaction(function () use ($dados, $caminhos, $posterIndex, $generos) {
+                $filme = Movie::create($dados);
+                foreach ($caminhos as $i => $caminho) {
+                    $imagem = Image::create([
+                        'caminho' => $caminho,
+                        'nome' => 'Imagem de ' . $filme->nome,
+                    ]);
+                    // Associa ao filme com pivot poster
+                    $filme->images()->attach($imagem->id, [
+                        'poster' => ($i === (int) $posterIndex),
+                    ]);
+                }
 
+                $filme->genres()->attach($generos);
+            });
+        } catch (\Exception $e) {
+            foreach ($caminhos as $caminho) {
+                Storage::disk('public')->delete($caminho);
+            }
+            return back()->with('erro', 'Erro ao salvar. Tente novamente.');
+        }
 
         return redirect('/filmes')->with('sucesso', 'Filme cadastrado!');
     }
@@ -69,7 +140,8 @@ class MovieController extends Controller
     public function show(string $id)
     {
 
-        $filme = Movie::findOrFail($id);
+        // $filme = Filme :: findOrFail($id);
+        $filme = Movie::with(['images', 'genres'])->findOrFail($id);
         // Carrega as avaliações com os usuários já incluídos
         $avaliacoes = $filme->reviews()->with('user')->orderBy('created_at', 'desc')->get();
         return view('filmes.show', compact('filme', 'avaliacoes'));
@@ -80,24 +152,76 @@ class MovieController extends Controller
      */
     public function edit(string $id)
     {
-        $filme = Movie::findOrFail($id);
-        return view('filmes.edit', compact('filme'));
+        $filme = Movie::with(['images', 'genres'])->findOrFail($id);
+        $generos = Genre::orderBy('nome')->get();
+        return view('filmes.edit', compact('filme', 'generos'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    // public function update(UpdateFilmeRequest $request,int $id) {
-
+    // public function update(UpdateFilmeRequest $request, int $id)
+    // {
     //     $filme = Movie::findOrFail($id);
-    //     $filme->update($request->validated());
-    //     return redirect('/filmes/' . $id)->with('sucesso', 'Filme atualizado!');
+
+    //     $dados = $request->validated();
+
+    //     // Remove poster dos dados do Movie
+    //     unset($dados['poster']);
+
+    //     $imagem = $filme->images->first();
+
+    //     // Remove imagem antiga
+    //     if ($imagem && $imagem->caminho) {
+    //         Storage::disk('public')->delete($imagem->caminho);
+    //     }
+
+    //     // Salva nova imagem
+    //     $caminho = $request->file('poster')
+    //         ->store('posters', 'public');
+
+    //     // Atualiza registro da imagem
+    //     if ($imagem) {
+    //         $imagem->update([
+    //             'caminho' => $caminho,
+    //             'nome' => 'Poster de ' . $filme->nome
+    //         ]);
+    //     }
+    //     $filme->update($dados);
+    //     return redirect('/filmes/' . $id)->with('sucesso', 'Atualizado!');
     // }
+
+
+    // Processa a atualização
+    public function update(UpdateFilmeRequest $request, int $id)
+    {
+        $filme = Movie::findOrFail($id);
+        $filme->update($request->validated());
+
+        // 1. Atualiza qual imagem é o poster
+        if ($request->filled('poster_imagem_id')) {
+            // Desmarca todos os posters do filme
+            $filme->images()->updateExistingPivot(
+                $filme->images->pluck('id'),
+                ['poster' => false]
+            );
+            // Marca a imagem selecionada como poster
+            $filme->images()->updateExistingPivot(
+                $request->poster_imagem_id,
+                ['poster' => true]
+            );
+        }
+        // 2. Adiciona novas imagens (se enviadas)
+        if ($request->hasFile('imagens')) {
+            $posterIndex = $request->input('poster_index');
+            foreach ($request->file('imagens') as $i => $arquivo) {
+                $caminho = $arquivo->store('imagens', 'public');
+                $imagem = Image::create(['caminho' => $caminho, 'nome' => 'Imagem de ' . $filme->nome]);
+                $filme->images()->attach($imagem->id, ['poster' => ($i == $posterIndex)]);
+            }
+        }
+        return redirect('/filmes/' . $id)->with('sucesso', 'Filme atualizado!');
+    }
 
     /**
      * Remove the specified resource from storage.

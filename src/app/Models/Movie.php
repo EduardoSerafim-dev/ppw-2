@@ -65,9 +65,18 @@ class Movie extends Model
     // created_at na pivot
   }
 
+  // Filme tem muitos gêneros (via tabela pivot genre_movie)
+  public function genres(): BelongsToMany
+  {
+    return $this->belongsToMany(Genre::class)
+      ->withTimestamps();
+    // created_at na pivot
+  }
+
   public function images(): BelongsToMany
   {
     return $this->belongsToMany(Image::class)
+      ->withPivot('poster')
       ->withTimestamps();
   }
 }

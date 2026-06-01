@@ -15,7 +15,7 @@
             <label for="preco">Preço: </label>
             <input type="number" class="form-control" name="preco" placeholder="Digite o preço do produto">
         </div>
-        <button type="submit" class="btn btn-outline-dark">Criar produto</button>
+        <button type="submit" class="btn btn-primary">Criar produto</button>
     </form>
 
 @endsection

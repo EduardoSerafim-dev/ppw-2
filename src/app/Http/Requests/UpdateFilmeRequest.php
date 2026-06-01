@@ -26,26 +26,37 @@ class UpdateFilmeRequest extends FormRequest
         // Pega o ID da rota (se for update)
         $id = $this->route('filme');
         return [
-            'titulo' => [
+            'nome' => [
                 'required',
                 'string',
                 // unique na tabela filmes,
                 // ignorando o registro com id = $id
-                Rule::unique('filmes')->ignore($id),
+                Rule::unique('movies')->ignore($id),
             ],
-            'ano' => 'required|integer|min:1888|max:2099',
+            'data_lancamento' => 'required|date|after:1888-01-01|before:2099-01-01',
+            'classificacao' => 'required|string|max:50',
             'sinopse' => 'nullable|string|max:2000',
             'duracao' => 'required|integer|min:1',
-            'poster' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            // Novas imagens — opcionais no update
+            'imagens' => 'sometimes|nullable|array|max:5',
+            'imagens.*' => 'image|mimes:jpeg,png,webp|max:2048',
+            // Índice do poster entre as novas imagens enviadas
+            'poster_index' => 'nullable|integer|min:0',
+            // ID de imagem existente para definir como poster
+            'poster_imagem_id' => 'nullable|integer',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'titulo.required' => 'O título é obrigatório.',
-            'ano.min' => 'O cinema existe desde 1888.',
-            'ano.max' => 'Ano inválido.',
+            'nome.required' => 'O título é obrigatório.',
+            'data_lancamento.required' => 'A data de lançamento é obrigatória.',
+            'data_lancamento.after' => 'O cinema existe desde 1888.',
+            'data_lancamento.before' => 'Ano inválido.',
+            'duracao.required' => 'A duração é obrigatória.',
+            'duracao.min' => 'Duração muito curta.',
+            'classificacao.required' => 'A classificação é obrigatória.',
         ];
     }
 }

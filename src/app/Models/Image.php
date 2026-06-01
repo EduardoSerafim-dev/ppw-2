@@ -22,6 +22,7 @@ class Image extends Model
        public function movies(): BelongsToMany
        {
               return $this->belongstoMany(Movie::class)
+                     ->withPivot('poster')
                      ->withTimestamps();
        }
 

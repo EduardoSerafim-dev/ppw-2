@@ -2,12 +2,20 @@
 
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\FilmeController;
+use App\Http\Controllers\GenreController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MovieController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\ReviewController;
+use App\Models\Person;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-});
+// Route::get('/', function () {
+//     return view('home');
+// });
+
+Route::get('/', [HomeController::class, 'index']);
 
 // Rota GET com retorno JSON
 Route::get('/ping', function () {
@@ -90,8 +98,6 @@ Route::get('/usuarios/{id}', function (int $id) {
 
 //Cria todas as rotas como acima, de acordo com o padrão REST, exceto as informadas.
 
-// Route::resource('filmes', MovieController::class)
-//     ->middleware('auth');
 
 // Grupo de rotas protegidas
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -99,19 +105,34 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('filmes', MovieController::class)
         ->except(['index', 'show']);
 
-    //  Route::resource('atores', AtorController::class)
-    //  ->except(['index', 'show']);
+    // Route::resource('atores', ActorController::class)
+    //     ->except(['index', 'show']);
 
-    //  Route::resource('diretores', DiretorController::class)
-    //  ->except(['index', 'show']);
+    // Route::resource('diretores', DirectorController::class)
+    //     ->except(['index', 'show']);
+
+    Route::resource('generos', GenreController::class)
+        ->except(['show']);
+
+    Route::resource('pessoas', PersonController::class);
+
+    Route::resource('avaliacoes', ReviewController::class)->except(['create', 'store']);
+    Route::get('/avaliacoes/create/{id_filme}', [ReviewController::class, 'create']);
+    Route::post('/avaliacoes/{id_filme}', [ReviewController::class, 'store']);
 
     Route::get('/admin', function () {
         return view('admin');
     });
 });
 
+Route::delete(
+    '/imagens/{imagem}/filme/{filme}',
+    [ImageController::class, 'destroyFromFilme']
+)->middleware(['auth', 'admin']);
+
 // Rotas públicas — sem middleware
 Route::get('/filmes', [MovieController::class, 'index']);
 Route::get('/filmes/{id}', [MovieController::class, 'show']);
+
 
 require __DIR__ . '/auth.php';

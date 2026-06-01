@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-center">
-    <div style="width: 60%; height: 60%;" id="carouselExampleAutoplaying" class="carousel slide mb-4"
+    <div style="width: 60%; height: 60%;" id="carouselExampleAutoplaying" class="carousel slide mb-4 shadow-lg rounded"
         data-bs-ride="carousel">
         <div class="carousel-inner">
             <div class="carousel-item active">

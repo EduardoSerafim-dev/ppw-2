@@ -17,29 +17,36 @@
                         Filmes
                     </a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="btn btn-outline-dark dropdown-toggle mx-1 mb-1" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        Gênero
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Ação</a></li>
-                        <li><a class="dropdown-item" href="#">Comédia</a></li>
-                        <li><a class="dropdown-item" href="#">Drama</a></li>
-                        <li><a class="dropdown-item" href="#">Policial</a></li>
-                        <li><a class="dropdown-item" href="#">Romance</a></li>
-                        <li><a class="dropdown-item" href="#">Suspense</a></li>
-                        <li><a class="dropdown-item" href="#">Terror</a></li>
-                        <li><a class="dropdown-item" href="#">Ficção Científica</a></li>
-                    </ul>
-                </li>
+                @isset($generos)
+                    <li class="nav-item dropdown">
+                        <a class="btn btn-outline-dark dropdown-toggle mx-1 mb-1" href="#" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            Gêneros
+                        </a>
+                        <ul class="dropdown-menu">
+                            @foreach ($generos as $genero)
+                                <li><a class="dropdown-item" href="#">{{ $genero->nome }}</a></li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endisset
+                @auth
+                    @if (auth()->user()->isAdmin())
+                        <li class="nav-item">
+                            <a class="btn btn-outline-dark mx-1 mb-1" aria-current="page" href="/admin">
+                                Painel Admin
+                            </a>
+                        </li>
+                    @endif
+                @endauth
             </ul>
             {{-- <form class="d-flex" role="search">
                 <input class="form-control me-2" type="search" placeholder="Procurar" aria-label="Procurar" />
                 <button class="btn btn-outline-dark"><i class="bi bi-search"></i></button>
             </form> --}}
-            <form class="d-flex" role="search">
-                <input type="search" class="form-control w-100 " placeholder="Procurar" aria-label="Procurar" />
+            <form action="/" method="GET" class="d-flex" role="search">
+                <input type="search" name="busca" class="form-control w-100 " value="{{ request('busca') }}"
+                    placeholder="Procurar" aria-label="Procurar" />
                 <button type="submit" class="btn btn-outline-dark mx-1"><i class="bi bi-search"></i></button>
             </form>
             @auth

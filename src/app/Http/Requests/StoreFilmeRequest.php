@@ -32,7 +32,13 @@ class StoreFilmeRequest extends FormRequest
             'classificacao' => 'required|string|max:50',
             'sinopse' => 'nullable|string|max:2000',
             // Poster obrigatório no cadastro
-            'poster' => 'required|image|mimes:jpeg,png,webp|max:2048',
+            // 'poster' => 'required|image|mimes:jpeg,png,webp|max:2048',
+            'imagens' => 'required|array|min:1|max:5',
+            'imagens.*' => 'image|mimes:jpeg,png,webp|max:2048',
+            // Valida o índice do poster
+            'poster_index' => 'nullable|integer|min:0',
+            'generos' => 'required|array|min:1',
+            'generos.*' => 'exists:genres,id',
         ];
     }
 
@@ -47,7 +53,12 @@ class StoreFilmeRequest extends FormRequest
             'duracao.required' => 'A duração é obrigatória.',
             'duracao.min' => 'Duração muito curta.',
             'classificacao.required' => 'A classificação é obrigatória.',
-            'poster.required' => 'O poster é obrigatório.',
+            'imagens.required' => 'Envie ao menos uma imagem.',
+            'imagens.max' => 'Máximo de 5 imagens por vez.',
+            'imagens.*.image' => 'Todos os arquivos devem ser imagens.',
+            'imagens.*.max' => 'Cada imagem pode ter no máximo 2 MB.',
+            'generos.required' => 'Selecione ao menos um gênero para o filme.',
+            // 'poster.required' => 'O poster é obrigatório.',
         ];
     }
 }
