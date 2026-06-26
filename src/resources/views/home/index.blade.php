@@ -13,130 +13,103 @@
 
     @if (request('busca'))
 
-        <h4 class="mb-4">
-            Resultados para "{{ request('busca') }}"
+        <h4 style="margin: 0 2% 0 2%; border-bottom: 5px solid #a0d6fa; padding-bottom: 10px" class="mb-4">
+            <div class="mx-4">Resultados para <b>"{{ request('busca') }}"</b>:</div>
         </h4>
 
         {{-- FILMES --}}
         <div class="mb-5">
-
-            <h3>Filmes</h3>
+            <h3 class="mx-4">Filmes</h3>
 
             @forelse($filmes as $filme)
-                <div class="card mb-3">
-
+                <div class="card mb-3 mx-4">
                     <div class="card-body">
-
                         <h5>
                             <a href="/filmes/{{ $filme->id }}">
                                 {{ $filme->nome }}
                             </a>
                         </h5>
-
                         <p>
-
                             @foreach ($filme->genres as $genero)
                                 <span class="badge bg-secondary">
                                     {{ $genero->nome }}
                                 </span>
                             @endforeach
-
                         </p>
-
                     </div>
-
                 </div>
-
             @empty
-
                 <p>Nenhum filme encontrado.</p>
             @endforelse
-
         </div>
 
         {{-- PESSOAS --}}
         <div class="mb-5">
+            <h3 class="mx-4">Pessoas</h3>
 
-            <h3>Pessoas</h3>
-
-            @forelse($pessoas as $pessoa)
-                <div class="card mb-3">
-
-                    <div class="card-body">
-
-                        <h5>
-                            <a href="/pessoas/{{ $pessoa->id }}">
-                                {{ $pessoa->nome }}
-                            </a>
-                        </h5>
-
-                        <p>
-
-                            @if ($pessoa->actor)
-                                <span class="badge bg-primary">
-                                    Ator
-                                </span>
-                            @endif
-
-                            @if ($pessoa->director)
-                                <span class="badge bg-success">
-                                    Diretor
-                                </span>
-                            @endif
-
-                            @if ($pessoa->writer)
-                                <span class="badge bg-warning text-dark">
-                                    Escritor
-                                </span>
-                            @endif
-
-                            @if ($pessoa->producer)
-                                <span class="badge bg-danger">
-                                    Produtor
-                                </span>
-                            @endif
-
-                        </p>
-
+            <div class="row row-cols-1 row-cols-md-4 mx-4 mt-4 g-1 ">
+                @forelse($pessoas as $pessoa)
+                    <div class="card mb-1">
+                        <div class="card-body">
+                            <h5>
+                                <a href="/pessoas/{{ $pessoa->id }}">
+                                    {{ $pessoa->nome }}
+                                </a>
+                            </h5>
+                            <p>
+                                @if ($pessoa->actor)
+                                    <span class="badge bg-primary">
+                                        Ator
+                                    </span>
+                                @endif
+                                @if ($pessoa->director)
+                                    <span class="badge bg-success">
+                                        Diretor
+                                    </span>
+                                @endif
+                                @if ($pessoa->writer)
+                                    <span class="badge bg-warning text-dark">
+                                        Escritor
+                                    </span>
+                                @endif
+                                @if ($pessoa->producer)
+                                    <span class="badge bg-danger">
+                                        Produtor
+                                    </span>
+                                @endif
+                            </p>
+                        </div>
                     </div>
-
-                </div>
-
-            @empty
-
-                <p>Nenhuma pessoa encontrada.</p>
-            @endforelse
+                @empty
+                    <p>Nenhuma pessoa encontrada.</p>
+                @endforelse
+            </div>
 
         </div>
 
         {{-- GÊNEROS --}}
         <div class="mb-5">
-
-            <h3>Gêneros</h3>
-
-            @forelse($generos as $genero)
-                <div class="card mb-3">
-
-                    <div class="card-body">
-
-                        <h5>
-                            {{ $genero->nome }}
-                        </h5>
-
+            <h3 class="mx-4">Gêneros</h3>
+            <div class="row row-cols-1 row-cols-md-4 mx-4 mt-4 g-1 ">
+                @forelse($generos as $genero)
+                    <div>
+                        <div class="card mb-1">
+                            <div class="card-body">
+                                <h5>
+                                    {{ $genero->nome }}
+                                </h5>
+                            </div>
+                        </div>
                     </div>
-
-                </div>
-
-            @empty
-
-                <p>Nenhum gênero encontrado.</p>
-            @endforelse
-
-        </div>
-    @else
-        @include('partials.carousel')
-        @include('partials.cards-atores')
-        @include('partials.cards-filmes')
+                @empty
+            </div>
+            <p>Nenhum gênero encontrado.</p>
+    @endforelse
+    </div>
+@else
+    @include('partials.carousel')
+    @include('partials.cards-atores')
+    @include('partials.cards-filmes')
 
     @endif
 

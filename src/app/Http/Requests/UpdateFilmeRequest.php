@@ -37,6 +37,7 @@ class UpdateFilmeRequest extends FormRequest
             'classificacao' => 'required|string|max:50',
             'sinopse' => 'nullable|string|max:2000',
             'duracao' => 'required|integer|min:1',
+
             // Novas imagens — opcionais no update
             'imagens' => 'sometimes|nullable|array|max:5',
             'imagens.*' => 'image|mimes:jpeg,png,webp|max:2048',
@@ -44,6 +45,25 @@ class UpdateFilmeRequest extends FormRequest
             'poster_index' => 'nullable|integer|min:0',
             // ID de imagem existente para definir como poster
             'poster_imagem_id' => 'nullable|integer',
+
+            // Regras comuns (Store e Update):
+            'vinculos' => 'nullable|array',
+            'vinculos.*.pessoa_id' => 'required_with:vinculos|integer|exists:people,id',
+            'vinculos.*.tipo' => 'required_with:vinculos|in:ator,diretor,produtor,escritor',
+            'vinculos.*.personagem' => 'nullable|string|max:100',
+
+            // Regras adicionais apenas no Update:
+            'remover_vinculos' => 'nullable|array',
+            'remover_vinculos.atores' => 'nullable|array',
+            'remover_vinculos.atores.*' => 'integer|exists:actors,id',
+            'remover_vinculos.diretores' => 'nullable|array',
+            'remover_vinculos.diretores.*' => 'integer|exists:directors,id',
+            'remover_vinculos.produtores' => 'nullable|array',
+            'remover_vinculos.produtores.*' => 'integer|exists:producers,id',
+            'remover_vinculos.escritores' => 'nullable|array',
+            'remover_vinculos.escritores.*' => 'integer|exists:writers,id',
+            'atores_existentes' => 'nullable|array',
+            'atores_existentes.*.personagem' => 'nullable|string|max:100',
         ];
     }
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\StudioController;
 use App\Models\Person;
 use Illuminate\Support\Facades\Route;
 
@@ -15,17 +16,17 @@ use Illuminate\Support\Facades\Route;
 //     return view('home');
 // });
 
-Route::get('/', [HomeController::class, 'index']);
 
+Route::get('/', [HomeController::class, 'index']);
 // Rota GET com retorno JSON
-Route::get('/ping', function () {
-    return response()->json(['status' => 'ok', 'versao' => '1.0']);
-});
+// Route::get('/ping', function () {
+//     return response()->json(['status' => 'ok', 'versao' => '1.0']);
+// });
 
 // Rota POST
-Route::post('/dados', function () {
-    return response()->json(['mensagem' => 'Dados recebidos!']);
-});
+// Route::post('/dados', function () {
+//     return response()->json(['mensagem' => 'Dados recebidos!']);
+// });
 
 // // Parâmetro obrigatório
 // Route::get('/produtos/{id}', function (int $id) {
@@ -33,14 +34,14 @@ Route::post('/dados', function () {
 // });
 
 // Parâmetro opcional (com valor padrão)
-Route::get('/categorias/{slug?}', function (string $slug = 'todas') {
-    return response()->json(['categoria' => $slug]);
-});
+// Route::get('/categorias/{slug?}', function (string $slug = 'todas') {
+//     return response()->json(['categoria' => $slug]);
+// });
 
 // Restrição: aceita apenas números inteiros
-Route::get('/usuarios/{id}', function (int $id) {
-    return response()->json(['usuario_id' => $id]);
-})->whereNumber('id');
+// Route::get('/usuarios/{id}', function (int $id) {
+//     return response()->json(['usuario_id' => $id]);
+// })->whereNumber('id');
 
 // // Agrupando rotas com prefixo e nome compartilhado
 // Route::prefix('admin')->name('admin.')->group(function () {
@@ -99,40 +100,41 @@ Route::get('/usuarios/{id}', function (int $id) {
 //Cria todas as rotas como acima, de acordo com o padrão REST, exceto as informadas.
 
 
-// Grupo de rotas protegidas
+// Grupo de rotas protegidas ==========================================================
+
 Route::middleware(['auth', 'admin'])->group(function () {
 
-    Route::resource('filmes', MovieController::class)
-        ->except(['index', 'show']);
 
-    // Route::resource('atores', ActorController::class)
-    //     ->except(['index', 'show']);
+    Route::resource('filmes', MovieController::class);
 
-    // Route::resource('diretores', DirectorController::class)
-    //     ->except(['index', 'show']);
+    Route::resource('estudios', StudioController::class);
 
-    Route::resource('generos', GenreController::class)
-        ->except(['show']);
+    Route::resource('generos', GenreController::class);
 
+    Route::get('/pessoas/buscar', [PersonController::class, 'buscar']);
     Route::resource('pessoas', PersonController::class);
 
     Route::resource('avaliacoes', ReviewController::class)->except(['create', 'store']);
     Route::get('/avaliacoes/create/{id_filme}', [ReviewController::class, 'create']);
-    Route::post('/avaliacoes/{id_filme}', [ReviewController::class, 'store']);
+
+    Route::delete(
+        '/imagens/{imagem}/filme/{filme}',
+        [ImageController::class, 'destroyFromFilme']
+    );
 
     Route::get('/admin', function () {
         return view('admin');
     });
 });
 
-Route::delete(
-    '/imagens/{imagem}/filme/{filme}',
-    [ImageController::class, 'destroyFromFilme']
-)->middleware(['auth', 'admin']);
+Route::post('/avaliacoes/{id_filme}', [ReviewController::class, 'store'])->middleware('auth');
 
-// Rotas públicas — sem middleware
-Route::get('/filmes', [MovieController::class, 'index']);
-Route::get('/filmes/{id}', [MovieController::class, 'show']);
 
+// Rotas públicas — sem middleware ==================================================
+
+Route::get('/filmes-p/{id}', [MovieController::class, 'show_public']);
+Route::get('/pessoas-p/{id}', [PersonController::class, 'show_public']);
+
+Route::get('/filmes/{id}/avaliacoes', [ReviewController::class, 'index']);
 
 require __DIR__ . '/auth.php';

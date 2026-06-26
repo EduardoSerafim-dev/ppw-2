@@ -64,6 +64,8 @@ class ImageController extends Controller
     {
         $filme->images()->detach($imagem->id);
         $usos = $imagem->movies()->count() + $imagem->people()->count();
+
+
         if ($usos === 0) {
             Storage::disk('public')->delete($imagem->caminho);
             $imagem->delete();

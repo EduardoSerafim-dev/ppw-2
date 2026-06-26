@@ -10,13 +10,23 @@ class ReviewController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(int $filmeId)
     {
-        $avaliacoes = Review::with(['user', 'movie'])
+        $avaliacoes = Review::with('user')
+            ->where('movie_id', $filmeId)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(4);
+        // Se for requisição AJAX (Accept: application/json), retorna JSON
+        // O paginator serializa automaticamente para JSON com metadados
 
-        return view("avaliacoes.index", compact("avaliacoes"));
+        return response()->json([
+            'data' => $avaliacoes->items(),
+            'current_page' => $avaliacoes->currentPage(),
+            'last_page' => $avaliacoes->lastPage(),
+            'total' => $avaliacoes->total(),
+            'next_page_url' => $avaliacoes->nextPageUrl(),
+            'prev_page_url' => $avaliacoes->previousPageUrl(),
+        ]);
     }
 
     /**
@@ -36,14 +46,14 @@ class ReviewController extends Controller
             'descricao' => 'required|string|min:3',
         ]);
 
-        Review::create([
+        $avaliacao = Review::create([
             'nota' => $dados['nota'],
             'descricao' => $dados['descricao'],
             'movie_id' => $id_filme,
             'user_id' => auth()->id(),
         ]);
 
-        return redirect('/avaliacoes')
+        return redirect('/avaliacoes/' . $avaliacao->id)
             ->with('sucesso', 'Avaliação criada!');
     }
 
@@ -86,7 +96,7 @@ class ReviewController extends Controller
 
         $avaliacao->update($dados);
 
-        return redirect('/avaliacoes')->with('sucesso', 'Avaliação atualizado!');
+        return redirect('/avaliacoes/' . $id)->with('sucesso', 'Avaliação atualizada!');
     }
 
     /**
@@ -95,10 +105,6 @@ class ReviewController extends Controller
     public function destroy(string $id)
     {
         $avaliacao = Review::findOrFail($id);
-
-        // if ($avaliacao->user_id !== auth()->id()) {
-        //     abort(403);
-        // }
 
         $avaliacao->delete();
 

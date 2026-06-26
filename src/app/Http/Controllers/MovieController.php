@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateFilmeRequest;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\Image;
+use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -69,36 +70,6 @@ class MovieController extends Controller
      */
     public function store(StoreFilmeRequest $request)
     {
-        // // Se chegou aqui, os dados são válidos
-        // // $request->validated() retorna só os campos
-        // // que passaram pelas regras — mais seguro
-        // // do que $request->all()
-        // $dados = $request->validated();
-
-        // // Remove poster dos dados do Movie
-        // unset($dados['poster']);
-
-        // $filme = Movie::create($dados);
-
-        // // Salva o arquivo e obtém o caminho relativo
-        // // Ex.: 'posters/AbCdEfGhIj1234.jpg'
-        // if ($request->hasFile('poster')) {
-        //     $caminho = $request->file('poster')
-        //         ->store('posters', 'public');
-
-        //     // Cria registro na tabela images
-        //     $imagem = Image::create([
-        //         'caminho' => $caminho,
-        //         'nome' => 'Poster de ' . $filme->nome
-        //     ]);
-
-        //     // Associa imagem ao filme
-        //     $filme->images()->attach($imagem->id);
-        // }
-
-
-        // return redirect('/filmes')->with('sucesso', 'Filme cadastrado!');
-
         $dados = $request->validated();
         $generos = $request->input('generos');
         $posterIndex = $request->input('poster_index', 0);
@@ -109,8 +80,10 @@ class MovieController extends Controller
             $caminhos[] = $arquivo->store('imagens', 'public');
         }
         try {
-            DB::transaction(function () use ($dados, $caminhos, $posterIndex, $generos) {
+            DB::transaction(function () use ($dados, $generos, $caminhos, $posterIndex, $request) {
                 $filme = Movie::create($dados);
+                $this->sincronizarVinculos($filme, $request->input('vinculos', []));
+
                 foreach ($caminhos as $i => $caminho) {
                     $imagem = Image::create([
                         'caminho' => $caminho,
@@ -140,8 +113,7 @@ class MovieController extends Controller
     public function show(string $id)
     {
 
-        // $filme = Filme :: findOrFail($id);
-        $filme = Movie::with(['images', 'genres'])->findOrFail($id);
+        $filme = Movie::with(['actors.person', 'directors.person', 'producers.person', 'writers.person', 'genres', 'images'])->findOrFail($id);
         // Carrega as avaliações com os usuários já incluídos
         $avaliacoes = $filme->reviews()->with('user')->orderBy('created_at', 'desc')->get();
         return view('filmes.show', compact('filme', 'avaliacoes'));
@@ -152,7 +124,7 @@ class MovieController extends Controller
      */
     public function edit(string $id)
     {
-        $filme = Movie::with(['images', 'genres'])->findOrFail($id);
+        $filme = Movie::with(['actors.person', 'directors.person', 'producers.person', 'writers.person', 'genres', 'images'])->findOrFail($id);
         $generos = Genre::orderBy('nome')->get();
         return view('filmes.edit', compact('filme', 'generos'));
     }
@@ -200,6 +172,7 @@ class MovieController extends Controller
 
         // 1. Atualiza qual imagem é o poster
         if ($request->filled('poster_imagem_id')) {
+
             // Desmarca todos os posters do filme
             $filme->images()->updateExistingPivot(
                 $filme->images->pluck('id'),
@@ -220,6 +193,22 @@ class MovieController extends Controller
                 $filme->images()->attach($imagem->id, ['poster' => ($i == $posterIndex)]);
             }
         }
+
+        // 1. Remover vínculos marcados
+        foreach ($request->input('remover_vinculos', []) as $relacao => $ids) {
+            if (in_array($relacao, ['actors', 'directors', 'producers', 'writers'])) {
+                $filme->$relacao()->detach($ids);
+            }
+        }
+        // 2. Atualizar personagem dos atores existentes
+        foreach ($request->input('atores_existentes', []) as $atorId => $dados) {
+            $filme->actors()->updateExistingPivot($atorId, [
+                'papel' => $dados['personagem'] ?? null
+            ]);
+        }
+        // 3. Adicionar novos vínculos (mesmo método do store)
+        $this->sincronizarVinculos($filme, $request->input('vinculos', []));
+
         return redirect('/filmes/' . $id)->with('sucesso', 'Filme atualizado!');
     }
 
@@ -229,5 +218,34 @@ class MovieController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function show_public(string $id)
+    {
+        $filme = Movie::findOrFail($id);
+        // $avaliacoes = $filme->reviews()->with('user')->get();
+        return view('filmes.show-public', compact('filme'));
+    }
+
+
+    // Método auxiliar privado — reutilizado no update()
+    private function sincronizarVinculos(Movie $filme, array $vinculos): void
+    {
+        foreach ($vinculos as $v) {
+            $pessoaId = $v['pessoa_id'] ?? null;
+            $pessoa = Person::find($pessoaId);
+            $tipo = $v['tipo'] ?? null;
+            $personagem = $v['personagem'] ?? null;
+            if (!$pessoaId || !$tipo) continue;
+            match ($tipo) {
+                'ator' => $filme->actors()->syncWithoutDetaching([
+                    $pessoa->actor->id => ['papel' => $personagem]
+                ]),
+                'diretor' => $filme->directors()->syncWithoutDetaching([$pessoa->director->id]),
+                'produtor' => $filme->producers()->syncWithoutDetaching([$pessoa->producer->id]),
+                'escritor' => $filme->writers()->syncWithoutDetaching([$pessoa->writer->id]),
+                default => null,
+            };
+        }
     }
 }

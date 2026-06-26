@@ -131,28 +131,28 @@
             @endforeach
         </div>
     @endif
-    <button type="button" id="btn-adicionar" class="btn btn-outline-secondary btn-sm">
+    <button type="button" id="btn-adicionar" class="btn btn-outline-dark btn-sm">
         + Adicionar imagem
     </button>
 </div>
 
 {{-- Bloco de imagens existentes — só aparece na edição --}}
-@if (isset($filme) && $filme->images->isNotEmpty())
+@if (isset($pessoa) && $pessoa->images->isNotEmpty())
     <div class="mb-1">
         <label class="form-label fw-bold">Imagens cadastradas</label>
         <div class="d-flex flex-wrap gap-3">
-            @foreach ($filme->images as $imagem)
+            @foreach ($pessoa->images as $imagem)
                 <div class="text-center" style="width: 130px">
                     <img src="{{ asset('storage/' . $imagem->caminho) }}" class="img-thumbnail mb-1"
                         style="height: 90px; object-fit: cover">
                     {{-- Radio para definir como poster --}}
-                    <div class="form-check form-check-inline">
+                    {{-- <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="poster_imagem_id"
                             value="{{ $imagem->id }}" {{ $imagem->pivot->poster ? 'checked' : '' }}>
                         <label class="form-check-label small">Poster</label>
-                    </div>
+                    </div> --}}
                     {{-- Botão de remoção individual --}}
-                    <form action="/imagens/{{ $imagem->id }}/filme/{{ $filme->id }}" method="POST"
+                    <form action="/imagens/{{ $imagem->id }}/filme/{{ $pessoa->id }}" method="POST"
                         class="mt-1" onsubmit="return confirm('Remover esta imagem?')">
                         @csrf
                         @method('DELETE')
@@ -165,3 +165,31 @@
         </div>
     </div>
 @endif
+
+
+@push('scripts')
+    <script>
+        const container = document.getElementById('campos-imagem');
+        const btnAdicionar = document.getElementById('btn-adicionar');
+        let indice = 1;
+        const MAX_FOTOS = 5;
+        btnAdicionar.addEventListener('click', () => {
+            if (indice >= MAX_FOTOS) {
+                alert('Máximo de ' + MAX_FOTOS + ' imagens.');
+                return;
+            }
+            const div = document.createElement('div');
+            div.className = 'campo-imagem mb-2 d-flex align-items-center gap-2';
+            div.innerHTML = `
+                        <input type="file" name="imagens[]" class="form-control"
+                        accept="image/jpeg,image/png,image/webp">
+                        <label class="mb-0">
+                        <input type="checkbox" name="poster_index" value="${indice}"> Poster
+                        </label>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="this.closest('.campo-imagem').remove()">✕</button>`;
+            container.appendChild(div);
+            indice++;
+        });
+    </script>
+@endpush

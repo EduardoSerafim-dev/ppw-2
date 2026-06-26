@@ -38,6 +38,7 @@ class PersonController extends Controller
      */
     public function store(StorePessoaRequest $request)
     {
+
         $dados = $request->validated();
         $profissoes = $request->input('profissoes');
         // $fotoPrincipalIndex = $request->input('principal_index', 0);
@@ -106,10 +107,22 @@ class PersonController extends Controller
      */
     public function show(string $id)
     {
-        // $filme = Filme :: findOrFail($id);
-        $pessoa = Person::with(['images', 'actor', 'producer', 'director', 'writer'])->findOrFail($id);
-        // Carrega as avaliações com os usuários já incluídos
-        return view('pessoas.show', compact('pessoa'));
+        $pessoa = Person::with(['images'])->findOrFail($id);
+
+        if ($pessoa->actor) {
+            $profissoes[] = 'Ator';
+        }
+        if ($pessoa->director) {
+            $profissoes[] = 'Diretor';
+        }
+        if ($pessoa->producer) {
+            $profissoes[] = 'Produtor';
+        }
+        if ($pessoa->writer) {
+            $profissoes[] = 'Escritor';
+        }
+
+        return view('pessoas.show', compact('pessoa', 'profissoes'));
     }
 
     /**
@@ -202,5 +215,64 @@ class PersonController extends Controller
 
         return redirect('/pessoas')
             ->with('sucesso', 'Pessoa excluída!');
+    }
+
+    public function show_public(string $id)
+    {
+        $pessoa = Person::findOrFail($id);
+        return view('pessoas.show-public', compact('pessoa'));
+    }
+
+    public function buscar(Request $request)
+    {
+        $termo = trim($request->input('q', ''));
+        $filmeId = $request->input('filme_id');
+        if (strlen($termo) < 2) {
+            return response()->json([]);
+        }
+        $pessoas = Person::with('images')->where('nome', 'ilike', "%{$termo}%")
+            ->limit(8)
+            ->get(['id', 'nome']);
+
+        // Indica quais tipos de vínculo a pessoa já tem no filme
+        return response()->json($pessoas->map(function ($p) use ($filmeId) {
+            $vinculos = [];
+            if ($filmeId) {
+                if ($p->actors?->filmes()->where('filme_id', $filmeId)->exists())
+                    $vinculos[] = 'ator';
+
+                if ($p->directors?->filmes()->where('filme_id', $filmeId)->exists())
+                    $vinculos[] = 'diretor';
+
+                if ($p->producers?->filmes()->where('filme_id', $filmeId)->exists())
+                    $vinculos[] = 'produtor';
+
+                if ($p->writers?->filmes()->where('filme_id', $filmeId)->exists())
+                    $vinculos[] = 'escritor';
+            }
+
+            $profissoes = [];
+
+            if ($p->actor) {
+                $profissoes[] = 'Ator';
+            }
+            if ($p->director) {
+                $profissoes[] = 'Diretor';
+            }
+            if ($p->producer) {
+                $profissoes[] = 'Produtor';
+            }
+            if ($p->writer) {
+                $profissoes[] = 'Escritor';
+            }
+
+            return [
+                'id' => $p->id,
+                'nome' => $p->nome,
+                'foto' => $p->images->first()?->caminho,
+                'vinculos' => $vinculos,
+                'profissoes' => $profissoes
+            ];
+        }));
     }
 }

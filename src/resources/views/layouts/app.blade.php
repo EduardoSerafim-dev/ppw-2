@@ -23,17 +23,18 @@
 
     <main>
         {{-- Aqui será inserido o conteúdo de cada página --}}
+        @include('partials.toast-sucesso')
         @yield('conteudo')
     </main>
 
-    <footer style="background-color: #a0d6fa;" data-bs-theme="light">
+    <footer>
         @include('layouts.footer')
     </footer>
     {{-- Scripts específicos de cada página (opcional) --}}
+    @stack('scripts')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
-    @stack('scripts')
 </body>
 
 </html>

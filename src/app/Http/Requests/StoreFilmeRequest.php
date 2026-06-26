@@ -37,8 +37,14 @@ class StoreFilmeRequest extends FormRequest
             'imagens.*' => 'image|mimes:jpeg,png,webp|max:2048',
             // Valida o índice do poster
             'poster_index' => 'nullable|integer|min:0',
-            'generos' => 'required|array|min:1',
-            'generos.*' => 'exists:genres,id',
+            // 'generos' => 'required|array|min:1',
+            // 'generos.*' => 'exists:genres,id',
+
+            // Regras comuns (Store e Update):
+            'vinculos' => 'nullable|array',
+            'vinculos.*.pessoa_id' => 'required_with:vinculos|integer|exists:people,id',
+            'vinculos.*.tipo' => 'required_with:vinculos|in:ator,diretor,produtor,escritor',
+            'vinculos.*.personagem' => 'nullable|string|max:100',
         ];
     }
 

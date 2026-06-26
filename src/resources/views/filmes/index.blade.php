@@ -68,12 +68,12 @@
                                 {{ \Carbon\Carbon::parse($filme->data_lancamento)->format('d/m/Y') }}</p>
                         </div>
 
-                        <a href="/filmes/{{ $filme->id }}" class="btn btn-outline-dark">
-                            Visualizar este filme
+                        <a href="/filmes/{{ $filme->id }}" class="btn btn-dark">
+                            <i class="bi bi-info-circle"></i> Visualizar este filme
                         </a>
 
-                        <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-outline-primary">
-                            Avaliar este filme
+                        <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-primary">
+                            <i class="bi bi-star"></i> Avaliar
                         </a>
                     </div>
                 </div>

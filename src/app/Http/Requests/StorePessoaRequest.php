@@ -24,7 +24,7 @@ class StorePessoaRequest extends FormRequest
     {
         return [
             'nome' => 'required|string|min:2|max:255',
-            'cpf' => 'required|string|min:1|max:255',
+            'cpf' => 'required|unique|string|min:1|max:255',
             'data_nascimento' => 'required|date|after:1888-01-01|before:2099-01-01',
             'biografia' => 'nullable|string|max:2000',
             'imagens' => 'required|array|min:1|max:5',
@@ -42,6 +42,8 @@ class StorePessoaRequest extends FormRequest
     {
         return [
             'nome.required' => 'O nome do ator é obrigatório.',
+            'cpf.required' => 'O CPF do ator é obrigatório.',
+            'cpf.unique' => 'Esse CPF já pertence a outra pessoa.',
             'data_nascimento.required' => 'A data de nascimento é obrigatória.',
             'genero.required' => 'O gênero é obrigatório.',
             'nacionalidade.required' => 'A nacionalidade é obrigatória.',

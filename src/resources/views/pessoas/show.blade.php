@@ -31,20 +31,7 @@
                         <strong>Gênero: </strong> {{ $pessoa->genero }} <br>
                         <strong>Data de nascimento: </strong>
                         {{ \Carbon\Carbon::parse($pessoa->data_nascimento)->format('d/m/Y') }} <br>
-                        <strong>Profissão(s):</strong>
-                        @if ($pessoa->actor)
-                            Ator
-                        @endif
-                        @if ($pessoa->director)
-                            Diretor
-                        @endif
-                        @if ($pessoa->producer)
-                            Produtor
-                        @endif
-                        @if ($pessoa->writer)
-                            Escritor
-                        @endif
-
+                        <strong>Profissão(ões): </strong>{{ implode(', ', $profissoes) }}
                         <br>
                     </p>
                 </div>
@@ -55,8 +42,8 @@
     <h3 style="margin-left: 10%" class="mb-4">Fotos</h3>
 
     @forelse ($pessoa->images as $imagem)
-        <img style="max-width: 15%" src="{{ asset('storage/' . $imagem_pessoa->caminho) }}"
-            alt="Imagem de {{ $pessoa->nome }}" class="img-fluid rounded w-10" title="Imagem de {{ $pessoa->nome }}">
+        <img style="max-width: 15%" src="{{ asset('storage/' . $imagem->caminho) }}" alt="Imagem de {{ $pessoa->nome }}"
+            class="img-fluid rounded w-10" title="Imagem de {{ $pessoa->nome }}">
     @empty
         <h5>Sem imagens</h5>
     @endforelse
