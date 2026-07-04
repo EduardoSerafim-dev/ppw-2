@@ -68,13 +68,31 @@
                                 {{ \Carbon\Carbon::parse($filme->data_lancamento)->format('d/m/Y') }}</p>
                         </div>
 
-                        <a href="/filmes/{{ $filme->id }}" class="btn btn-dark">
-                            <i class="bi bi-info-circle"></i> Visualizar este filme
-                        </a>
+                        <div class="d-flex gap-3">
 
-                        <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-primary">
-                            <i class="bi bi-star"></i> Avaliar
-                        </a>
+                            <a href="/filmes/{{ $filme->id }}" class="btn btn-dark">
+                                <i class="bi bi-info-circle"></i> Visualizar este filme
+                            </a>
+
+                            <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-primary">
+                                <i class="bi bi-star"></i> Avaliar
+                            </a>
+
+                            <a href="/filmes/{{ $filme->id }}/edit" class="btn btn-warning">
+                                Editar
+                            </a>
+
+                            {{-- Botão de remoção do filme --}}
+                            <form action="/filmes/{{ $filme->id }}" method="POST"
+                                onsubmit="return confirm('Remover este filme?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger">
+                                    Remover
+                                </button>
+                            </form>
+
+                        </div>
                     </div>
                 </div>
             </div>

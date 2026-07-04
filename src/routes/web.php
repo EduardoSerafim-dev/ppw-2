@@ -114,7 +114,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/pessoas/buscar', [PersonController::class, 'buscar']);
     Route::resource('pessoas', PersonController::class);
 
-    Route::resource('avaliacoes', ReviewController::class)->except(['create', 'store']);
+    Route::resource('avaliacoes', ReviewController::class)->except(['store']);
     Route::get('/avaliacoes/create/{id_filme}', [ReviewController::class, 'create']);
 
     Route::delete(
@@ -134,6 +134,8 @@ Route::post('/avaliacoes/{id_filme}', [ReviewController::class, 'store'])->middl
 
 Route::get('/filmes-p/{id}', [MovieController::class, 'show_public']);
 Route::get('/pessoas-p/{id}', [PersonController::class, 'show_public']);
+Route::get('/imagens-p/{id}', [ImageController::class, 'show_public']);
+Route::get('/avaliacoes-p/{id}', [ReviewController::class, 'show_public']);
 
 Route::get('/filmes/{id}/avaliacoes', [ReviewController::class, 'index']);
 

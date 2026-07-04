@@ -16,47 +16,51 @@
         }
     </style>
 
-    <div style="margin-top: 5%; margin-bottom: 3%">
-        <h1 class="d-flex justify-content-center mt-4 mb-4">{{ $filme->nome }}</h1>
+    <div class="clearfix mt-4 mb-4 mx-4">
+
+        {{-- Exibe o poster se existir, ou uma imagem padrão --}}
+        @php
+            $poster = $filme->images->firstWhere('pivot.poster', true);
+        @endphp
+
+        @if ($poster)
+            <img src="{{ asset('storage/' . $poster->caminho) }}" alt="Poster de {{ $filme->nome }}"
+                class="col-md-2 float-md-start mb-3 mx-md-3 rounded" title="Poster de {{ $filme->nome }}">
+        @else
+            <img src="{{ asset('imagens/sem-poster.jpg') }}" alt="Sem poster" title="Sem poster"
+                class="col-md-6 float-md-end mb-3 ms-md-3 img-fluid rounded w-10">
+        @endif
+
+        <p>
+        <h3>{{ $filme->nome }}</h3>
+        </p>
+        <p class="mt-2 "><i class="bi bi-star-fill text-warning"></i> 7,5/10</p>
+        <small>
+            <strong>Classificação:</strong> {{ $filme->classificacao }} <br>
+            <strong>Data de lançamento: </strong>{{ \Carbon\Carbon::parse($filme->data_lancamento)->format('d/m/Y') }}
+            <br><br>
+        </small>
+        <p><strong>Sinopse: </strong> {{ $filme->sinopse }}</p>
+        </p>
+        <p>
+            And yet, here you are, still persevering in reading this placeholder text, hoping for some more insights, or
+            some hidden easter egg of content. A joke, perhaps. Unfortunately, there’s none of that here. Lorem ipsum dolor
+            sit amet consectetur adipisicing elit. Facilis dolorum iste illum aperiam minima. Corporis accusamus aut sequi,
+            expedita fuga, vitae cupiditate quae magnam quo beatae minus, voluptas iusto nisi. Lorem ipsum dolor sit amet
+            consectetur adipisicing elit. Quia numquam iure corrupti ullam. Quas, expedita! Placeat, iure, ipsa voluptates
+            ducimus tenetur necessitatibus repellendus aliquam voluptatum facilis deleniti cumque totam alias.
+        </p>
+
+        <p>
+            <strong>Gêneros: </strong>
+            @foreach ($filme->genres as $genero)
+                {{ $genero->nome }}
+            @endforeach
+        </p>
     </div>
 
-    <div class="card mt-4 mb-4 mx-4 shadow-lg">
-        <div class="row g-0">
-            <div class="col-md-2">
-                {{-- Exibe o poster se existir, ou uma imagem padrão --}}
-                @php
-                    $poster = $filme->images->firstWhere('pivot.poster', true);
-                @endphp
+    <hr class="mx-4">
 
-                @if ($poster)
-                    <img src="{{ asset('storage/' . $poster->caminho) }}" alt="Poster de {{ $filme->nome }}"
-                        class="img-fluid rounded w-10" title="Poster de {{ $filme->nome }}">
-                @else
-                    <img src="{{ asset('imagens/sem-poster.jpg') }}" alt="Sem poster" title="Sem poster"
-                        class="img-fluid rounded w-10">
-                @endif
-            </div>
-            <div class="col-md-10">
-                <div class="card-body">
-                    <p class="card-text"><strong>Sinopse: </strong> {{ $filme->sinopse }}</p>
-                    <small>
-                        <strong>Duração:</strong> {{ $filme->duracao }} minutos <br>
-                        <strong>Classificação:</strong> {{ $filme->classificacao }} <br>
-                        <strong>Data de lançamento:</strong>
-                        {{ \Carbon\Carbon::parse($filme->data_lancamento)->format('d/m/Y') }} <br>
-                        <strong>Gênero(s):</strong>
-                        @foreach ($filme->genres as $genero)
-                            {{ $genero->nome }}
-                        @endforeach
-                        <br>
-                    </small>
-                    <p class="mt-2"><strong>Avaliação:</strong> Estrelas</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <h5 class="topicos mb-4 mx-4 p-2">Gêneros</h5>
     <h5 class="topicos mb-4 mx-4 p-2">Direção</h5>
     <h5 class="topicos mb-4 mx-4 p-2">Produção</h5>
     <h5 class="topicos mb-4 mx-4 p-2">Escritores</h5>

@@ -209,6 +209,10 @@ class MovieController extends Controller
         // 3. Adicionar novos vínculos (mesmo método do store)
         $this->sincronizarVinculos($filme, $request->input('vinculos', []));
 
+        // sync() — define exatamente quais gêneros
+        // o filme tem (remove os que não estão na lista)
+        $filme->genres()->sync($request->input('generos', []));
+
         return redirect('/filmes/' . $id)->with('sucesso', 'Filme atualizado!');
     }
 
@@ -217,14 +221,28 @@ class MovieController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $filme = Movie::with('images')->findOrFail($id);
+
+        foreach ($filme->images as $imagem) {
+
+            $filme->images()->detach($imagem->id);
+            $usos = $imagem->movies()->count() + $imagem->people()->count();
+
+            if ($usos === 0) {
+                Storage::disk('public')->delete($imagem->caminho);
+                $imagem->delete();
+            }
+        }
+
+        $filme->delete();
+        return redirect()->back()->with('sucesso', 'Filme removido!');
     }
 
     public function show_public(string $id)
     {
-        $filme = Movie::findOrFail($id);
-        // $avaliacoes = $filme->reviews()->with('user')->get();
-        return view('filmes.show-public', compact('filme'));
+        $filme = Movie::with(['actors.person', 'directors.person', 'producers.person', 'writers.person', 'genres', 'images', 'reviews'])->findOrFail($id);
+        $media_notas = $filme->reviews->avg('nota');
+        return view('filmes.show-public', compact('filme', 'media_notas'));
     }
 
 

@@ -36,9 +36,10 @@ class ImageController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show_public(string $id)
     {
-        //
+        $imagem = Image::findOrFail($id);
+        return view('imagens.show-public', compact('imagem'));
     }
 
     /**

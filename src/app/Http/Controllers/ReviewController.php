@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Review;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -41,6 +42,15 @@ class ReviewController extends Controller
      */
     public function store(Request $request, string $id_filme)
     {
+
+        $jaAvaliou = Review::where('user_id', auth()->id())
+            ->where('movie_id', $id_filme)
+            ->exists();
+
+        if ($jaAvaliou) {
+            return redirect()->back()->with('aviso', 'Você já avaliou este filme!');
+        }
+
         $dados = $request->validate([
             'nota' => 'required|integer|min:0|max:10',
             'descricao' => 'required|string|min:3',
@@ -53,14 +63,14 @@ class ReviewController extends Controller
             'user_id' => auth()->id(),
         ]);
 
-        return redirect('/avaliacoes/' . $avaliacao->id)
+        return redirect('/filmes-p/' . $id_filme)
             ->with('sucesso', 'Avaliação criada!');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show_public(string $id)
     {
         $avaliacao = Review::with([
             'user',

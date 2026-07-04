@@ -24,7 +24,7 @@ class StorePessoaRequest extends FormRequest
     {
         return [
             'nome' => 'required|string|min:2|max:255',
-            'cpf' => 'required|unique|string|min:1|max:255',
+            'cpf' => 'required|unique:people|string|min:1|max:255',
             'data_nascimento' => 'required|date|after:1888-01-01|before:2099-01-01',
             'biografia' => 'nullable|string|max:2000',
             'imagens' => 'required|array|min:1|max:5',

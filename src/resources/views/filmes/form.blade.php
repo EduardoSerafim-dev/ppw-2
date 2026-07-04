@@ -215,9 +215,9 @@
             div.className = 'campo-imagem mb-2 d-flex align-items-center gap-2';
             div.innerHTML = `
                         <input type="file" name="imagens[]" class="form-control"
-                        accept="image/jpeg,image/png,image/webp">
+                        accept="image/jpeg,image/png,image/webp">       
                         <label class="mb-0">
-                        <input type="checkbox" name="poster_index" value="${indice}"> Poster
+                        <input type="checkbox" name="poster_index" value="${indice_imagens}"> Poster
                         </label>
                         <button type="button" class="btn btn-sm btn-outline-danger"
                         onclick="this.closest('.campo-imagem').remove()">✕</button>`;
@@ -236,7 +236,7 @@
                 }
 
                 const imagemId = btn.dataset.imagem;
-                const filmeId = {{ $filme->id }};
+                const filmeId = @json($filme->id ?? null);
 
                 const form = document.getElementById('form-remover-imagem');
 

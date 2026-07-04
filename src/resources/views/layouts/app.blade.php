@@ -23,7 +23,7 @@
 
     <main>
         {{-- Aqui será inserido o conteúdo de cada página --}}
-        @include('partials.toast-sucesso')
+        @include('partials.toast-mensagem')
         @yield('conteudo')
     </main>
 

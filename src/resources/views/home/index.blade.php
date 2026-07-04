@@ -25,7 +25,7 @@
                 <div class="card mb-3 mx-4">
                     <div class="card-body">
                         <h5>
-                            <a href="/filmes/{{ $filme->id }}">
+                            <a href="/filmes-p/{{ $filme->id }}">
                                 {{ $filme->nome }}
                             </a>
                         </h5>
@@ -108,7 +108,7 @@
     </div>
 @else
     @include('partials.carousel')
-    @include('partials.cards-atores')
+    @include('partials.cards-atores-home')
     @include('partials.cards-filmes')
 
     @endif

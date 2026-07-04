@@ -12,7 +12,7 @@
     </div>
 
     @include('partials.carousel')
-    @include('partials.cards-atores')
+    @include('partials.cards-atores-home')
     @include('partials.cards-filmes')
 
 
