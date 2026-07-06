@@ -59,46 +59,43 @@
         </p>
     </div>
 
-    <hr class="mx-4">
+    <hr>
 
-    <h5 class="topicos mb-4 mx-4 p-2">Direção</h5>
-    <h5 class="topicos mb-4 mx-4 p-2">Produção</h5>
-    <h5 class="topicos mb-4 mx-4 p-2">Escritores</h5>
-    <h5 class="topicos mb-4 mx-4 p-2">Estudio</h5>
+    <div class="mb-4">
+        <h4 class="topicos p-2">Direção, Roteiro e Produção</h4>
 
-    <div style="margin-left: 5%" class="mb-4">
+        <strong class="p-4">Diretor(es):
+        </strong>{{ $filme->directors->map(fn($diretor) => $diretor->person->nome)->implode(', ') }}<br>
 
-        <h3 class="mb-4">Elenco</h3>
+        <strong class="p-4">Roteirista(s):
+        </strong>{{ $filme->writers->map(fn($escritor) => $escritor->person->nome)->implode(', ') }}<br>
 
-        <h3 class="mb-4">Fotos</h3>
+        <strong class="p-4">Produtor(es):
+        </strong>{{ $filme->producers->map(fn($produtor) => $produtor->person->nome)->implode(', ') }}<br>
+    </div>
 
-        @forelse ($filme->images as $imagem)
-            <img style="max-width: 15%" src="{{ asset('storage/' . $imagem->caminho) }}"
-                alt="Imagem de {{ $filme->nome }}" class="img-fluid rounded w-10" title="Imagem de {{ $filme->nome }}">
-        @empty
-            <h5 class="color-warning">Sem imagens</h5>
-        @endforelse
+    <hr>
 
-        <h3 class="mb-4">Avaliações</h3>
+    <div class="mb-4">
+        <h4 class="topicos p-2">Elenco</h4>
 
-        <div class="row gap-2 row-cols-1 row-cols-sm-3 row-cols-md-4 row-cols-lg-5">
-            @foreach ($avaliacoes as $av)
-                <div class="card mb-2 col">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ $av->user->name }}</strong>
-                            <span class="badge text-bg-warning" style="width: 60px">{{ $av->nota }}/10</span>
-                        </div>
-                        <p class="mb-0">
-                            {{ $av->descricao }}
-                        </p>
-                        <small class="text-muted">
-                            {{ $av->created_at->diffForHumans() }}
-                        </small>
-                    </div>
-                </div>
-            @endforeach
-        </div>
+        @foreach ($filme->actors as $ator)
+            @include('partials.div-atores-pagina-detalhes-de-filmes')
+        @endforeach
+    </div>
+
+    <hr>
+
+    <h3 class="mb-4">Fotos</h3>
+
+    @forelse ($filme->images as $imagem)
+        <img style="max-width: 15%" src="{{ asset('storage/' . $imagem->caminho) }}" alt="Imagem de {{ $filme->nome }}"
+            class="img-fluid rounded w-10" title="Imagem de {{ $filme->nome }}">
+    @empty
+        <h5 class="color-warning">Sem imagens</h5>
+    @endforelse
+
+
 
     </div>
 

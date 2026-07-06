@@ -29,4 +29,9 @@
         </div>
     </form>
 
+    <form id="form-remover-imagem" method="POST" style="display:none;">
+        @csrf
+        @method('DELETE')
+    </form>
+
 @endsection

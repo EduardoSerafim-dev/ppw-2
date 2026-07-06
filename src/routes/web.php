@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Route;
 // });
 
 
-Route::get('/', [HomeController::class, 'index']);
 // Rota GET com retorno JSON
 // Route::get('/ping', function () {
 //     return response()->json(['status' => 'ok', 'versao' => '1.0']);
@@ -74,7 +73,9 @@ Route::get('/', [HomeController::class, 'index']);
 // return response()->json(['id' => $id, 'Nome' => 'Produto ' . $id]);
 // });
 
-
+Route::get('/', [HomeController::class, 'index']);
+Route::get('/pesquisa', [HomeController::class, 'pesquisa'])
+    ->name('pesquisa');
 // Route::get('/produtos/{id}/avaliacoes', function (int $id) {
 //     return response()->json(['id' => $id, 'Nome' => 'Produto ' . $id, 'Avaliações' => 'Muito bom, Excelente, Confiável...']);
 // });
@@ -105,6 +106,7 @@ Route::get('/', [HomeController::class, 'index']);
 Route::middleware(['auth', 'admin'])->group(function () {
 
 
+    Route::get('/filmes/buscar', [MovieController::class, 'buscar']);
     Route::resource('filmes', MovieController::class);
 
     Route::resource('estudios', StudioController::class);
@@ -120,6 +122,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete(
         '/imagens/{imagem}/filme/{filme}',
         [ImageController::class, 'destroyFromFilme']
+    );
+
+    Route::delete(
+        '/imagens/{imagem}/pessoa/{pessoa}',
+        [ImageController::class, 'destroyFromPessoa']
     );
 
     Route::get('/admin', function () {

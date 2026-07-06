@@ -25,10 +25,10 @@
     <div class="d-flex mt-1 p-2 flex-shrink-0 overflow-auto">
         <div class="card-ator text-center">
 
-            <a href="/pessoas/{{ $ator->person->id }}">
+            <a href="/pessoas-p/{{ $ator->person->id }}">
 
                 @php
-                    $imagem_pessoa = $ator->person->images->first();
+                    $imagem_pessoa = $ator->person->images->firstWhere('pivot.principal', true);
                 @endphp
 
                 @if ($imagem_pessoa)

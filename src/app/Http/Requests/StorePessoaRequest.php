@@ -30,10 +30,16 @@ class StorePessoaRequest extends FormRequest
             'imagens' => 'required|array|min:1|max:5',
             'imagens.*' => 'image|mimes:jpeg,png,webp|max:2048',
             // Valida o índice do poster
-            // 'poster_index' => 'nullable|integer|min:0',
+            'principal_index' => 'nullable|integer|min:0',
             'genero' => 'required|string|min:1|max:255',
             'nacionalidade' => 'required|string|min:1|max:255',
             'profissoes' => 'required|array|min:1',
+
+            // Regras comuns (Store e Update):
+            'vinculos' => 'nullable|array',
+            'vinculos.*.filme_id' => 'required_with:vinculos|integer|exists:movies,id',
+            'vinculos.*.tipo' => 'required_with:vinculos|in:ator,diretor,produtor,escritor',
+            'vinculos.*.personagem' => 'nullable|string|max:100',
         ];
     }
 

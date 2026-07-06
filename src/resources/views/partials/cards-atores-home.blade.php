@@ -1,4 +1,4 @@
-<style>
+{{-- <style>
     .card-ator {
 
         width: 15%;
@@ -94,4 +94,37 @@
 
         </div>
     </div>
+</div> --}}
+
+
+<div class="card h-100 shadow-sm">
+
+    @php
+        $imagem = $ator->person->images->firstWhere('pivot.principal', true);
+    @endphp
+
+    @if ($imagem)
+        <img src="{{ asset('storage/' . $imagem->caminho) }}" class="card-img-top" alt="{{ $ator->person->nome }}"
+            title="{{ $ator->person->nome }}" style="height: 350px; object-fit: cover;">
+    @else
+        <img src="{{ asset('imagens/sem-poster.jpg') }}" class="card-img-top" alt="Sem foto" title="Sem foto"
+            style="height: 350px; object-fit: cover;">
+    @endif
+
+    <div class="card-body d-flex flex-column">
+
+        <h5 class="card-title">
+            {{ $ator->person->nome }}
+        </h5>
+
+        <p class="card-text">
+            {{ \Illuminate\Support\Str::limit($ator->person->biografia, 120) }}
+        </p>
+
+        <a href="/pessoas-p/{{ $ator->person->id }}" class="btn btn-outline-dark mt-auto">
+            Ver perfil
+        </a>
+
+    </div>
+
 </div>

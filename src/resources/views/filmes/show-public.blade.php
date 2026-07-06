@@ -108,7 +108,7 @@
             <h4 class="topicos p-2">Elenco</h4>
 
             @foreach ($filme->actors as $ator)
-                @include('partials.cards-atores-filmes')
+                @include('partials.div-atores-pagina-detalhes-de-filmes')
             @endforeach
         </div>
 

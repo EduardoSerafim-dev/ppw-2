@@ -167,51 +167,55 @@ class MovieController extends Controller
     // Processa a atualização
     public function update(UpdateFilmeRequest $request, int $id)
     {
-        $filme = Movie::findOrFail($id);
-        $filme->update($request->validated());
+        $filme = Movie::with(['actors', 'images'])->findOrFail($id);
 
-        // 1. Atualiza qual imagem é o poster
-        if ($request->filled('poster_imagem_id')) {
+        DB::transaction(function () use ($filme, $request) {
 
-            // Desmarca todos os posters do filme
-            $filme->images()->updateExistingPivot(
-                $filme->images->pluck('id'),
-                ['poster' => false]
-            );
-            // Marca a imagem selecionada como poster
-            $filme->images()->updateExistingPivot(
-                $request->poster_imagem_id,
-                ['poster' => true]
-            );
-        }
-        // 2. Adiciona novas imagens (se enviadas)
-        if ($request->hasFile('imagens')) {
-            $posterIndex = $request->input('poster_index');
-            foreach ($request->file('imagens') as $i => $arquivo) {
-                $caminho = $arquivo->store('imagens', 'public');
-                $imagem = Image::create(['caminho' => $caminho, 'nome' => 'Imagem de ' . $filme->nome]);
-                $filme->images()->attach($imagem->id, ['poster' => ($i == $posterIndex)]);
+            $filme->update($request->validated());
+
+            // 1. Atualiza qual imagem é o poster
+            if ($request->filled('poster_imagem_id')) {
+
+                // Desmarca todos os posters do filme
+                $filme->images()->updateExistingPivot(
+                    $filme->images->pluck('id'),
+                    ['poster' => false]
+                );
+                // Marca a imagem selecionada como poster
+                $filme->images()->updateExistingPivot(
+                    $request->poster_imagem_id,
+                    ['poster' => true]
+                );
             }
-        }
-
-        // 1. Remover vínculos marcados
-        foreach ($request->input('remover_vinculos', []) as $relacao => $ids) {
-            if (in_array($relacao, ['actors', 'directors', 'producers', 'writers'])) {
-                $filme->$relacao()->detach($ids);
+            // 2. Adiciona novas imagens (se enviadas)
+            if ($request->hasFile('imagens')) {
+                $posterIndex = $request->input('poster_index');
+                foreach ($request->file('imagens') as $i => $arquivo) {
+                    $caminho = $arquivo->store('imagens', 'public');
+                    $imagem = Image::create(['caminho' => $caminho, 'nome' => 'Imagem de ' . $filme->nome]);
+                    $filme->images()->attach($imagem->id, ['poster' => ($i == $posterIndex)]);
+                }
             }
-        }
-        // 2. Atualizar personagem dos atores existentes
-        foreach ($request->input('atores_existentes', []) as $atorId => $dados) {
-            $filme->actors()->updateExistingPivot($atorId, [
-                'papel' => $dados['personagem'] ?? null
-            ]);
-        }
-        // 3. Adicionar novos vínculos (mesmo método do store)
-        $this->sincronizarVinculos($filme, $request->input('vinculos', []));
 
-        // sync() — define exatamente quais gêneros
-        // o filme tem (remove os que não estão na lista)
-        $filme->genres()->sync($request->input('generos', []));
+            // 1. Remover vínculos marcados
+            foreach ($request->input('remover_vinculos', []) as $relacao => $ids) {
+                if (in_array($relacao, ['actors', 'directors', 'producers', 'writers'])) {
+                    $filme->$relacao()->detach($ids);
+                }
+            }
+            // 2. Atualizar personagem dos atores existentes
+            foreach ($request->input('atores_existentes', []) as $atorId => $dados) {
+                $filme->actors()->updateExistingPivot($atorId, [
+                    'papel' => $dados['personagem'] ?? null
+                ]);
+            }
+            // 3. Adicionar novos vínculos (mesmo método do store)
+            $this->sincronizarVinculos($filme, $request->input('vinculos', []));
+
+            // sync() — define exatamente quais gêneros
+            // o filme tem (remove os que não estão na lista)
+            $filme->genres()->sync($request->input('generos', []));
+        });
 
         return redirect('/filmes/' . $id)->with('sucesso', 'Filme atualizado!');
     }
@@ -243,6 +247,70 @@ class MovieController extends Controller
         $filme = Movie::with(['actors.person', 'directors.person', 'producers.person', 'writers.person', 'genres', 'images', 'reviews'])->findOrFail($id);
         $media_notas = $filme->reviews->avg('nota');
         return view('filmes.show-public', compact('filme', 'media_notas'));
+    }
+
+    public function buscar(Request $request)
+    {
+        $termo = trim($request->input('q', ''));
+
+        if (strlen($termo) < 2) {
+            return response()->json([]);
+        }
+
+        $filmes = Movie::with('images')
+            ->where('nome', 'ilike', "%{$termo}%")
+            ->limit(8)
+            ->get(['id', 'nome']);
+
+        $pessoaId = $request->input('pessoa_id');
+
+        $pessoa = null;
+
+        if ($pessoaId) {
+            $pessoa = Person::with(['actor', 'director', 'producer', 'writer'])
+                ->find($pessoaId);
+        }
+
+        return response()->json(
+            $filmes->map(function ($filme) use ($pessoa) {
+
+                $vinculos = [];
+
+                if (
+                    $pessoa && $pessoa->actor &&
+                    $pessoa->actor->movies()->where('movie_id', $filme->id)->exists()
+                ) {
+                    $vinculos[] = 'ator';
+                }
+
+                if (
+                    $pessoa && $pessoa->director &&
+                    $pessoa->director->movies()->where('movie_id', $filme->id)->exists()
+                ) {
+                    $vinculos[] = 'diretor';
+                }
+
+                if (
+                    $pessoa && $pessoa->producer &&
+                    $pessoa->producer->movies()->where('movie_id', $filme->id)->exists()
+                ) {
+                    $vinculos[] = 'produtor';
+                }
+
+                if (
+                    $pessoa && $pessoa->writer &&
+                    $pessoa->writer->movies()->where('movie_id', $filme->id)->exists()
+                ) {
+                    $vinculos[] = 'escritor';
+                }
+
+                return [
+                    'id' => $filme->id,
+                    'nome' => $filme->nome,
+                    'vinculos' => $vinculos,
+                ];
+            })
+        );
     }
 
 

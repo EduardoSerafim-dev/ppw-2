@@ -12,12 +12,7 @@
                         Início
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="btn btn-outline-dark mx-1 mb-1" aria-current="page" href="/filmes">
-                        Filmes
-                    </a>
-                </li>
-                @isset($generos)
+                {{-- @isset($generos)
                     <li class="nav-item dropdown">
                         <a class="btn btn-outline-dark dropdown-toggle mx-1 mb-1" href="#" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -29,12 +24,17 @@
                             @endforeach
                         </ul>
                     </li>
-                @endisset
+                @endisset --}}
                 @auth
                     @if (auth()->user()->isAdmin())
                         <li class="nav-item">
-                            <a class="btn btn-outline-dark mx-1 mb-1" aria-current="page" href="/admin">
-                                Painel Admin
+                            <a class="btn btn-outline-dark mx-1 mb-1" aria-current="page" href="/filmes">
+                                Filmes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-dark mx-1 mb-1" aria-current="page" href="/pessoas">
+                                Pessoas
                             </a>
                         </li>
                     @endif
@@ -44,7 +44,7 @@
                 <input class="form-control me-2" type="search" placeholder="Procurar" aria-label="Procurar" />
                 <button class="btn btn-outline-dark"><i class="bi bi-search"></i></button>
             </form> --}}
-            <form action="/" method="GET" class="d-flex" role="search">
+            <form action="{{ route('pesquisa') }}" method="GET" class="d-flex" role="search">
                 <input type="search" name="busca" class="form-control w-100 " value="{{ request('busca') }}"
                     placeholder="Procurar" aria-label="Procurar" />
                 <button type="submit" class="btn btn-outline-dark mx-1"><i class="bi bi-search"></i></button>

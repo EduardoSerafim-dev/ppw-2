@@ -7,6 +7,7 @@
     <div style=" margin: 5% 0 5% 0">
         <h1 class='mb-4 mt-4 d-flex justify-content-center'>Filmes</h1>
 
+        {{-- Formulário de busca com GET --}}
         <form action="/filmes" method="GET" class="mb-4 mt-4">
             <div class="row g-2 justify-content-center">
                 <div class="col-md-5">
@@ -38,7 +39,12 @@
         </form>
     </div>
 
-    {{-- Formulário de busca com GET --}}
+
+    <div class="d-flex justify-content-end">
+        <a href="/filmes/create" class="btn btn-success mx-4">
+            + Criar Novo Filme
+        </a>
+    </div>
 
     @forelse ($filmes as $filme)
         <div class="card mt-4 mb-4 mx-4 shadow-lg">
@@ -74,9 +80,9 @@
                                 <i class="bi bi-info-circle"></i> Visualizar este filme
                             </a>
 
-                            <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-primary">
+                            {{-- <a href="/avaliacoes/create/{{ $filme->id }}" class="btn btn-primary">
                                 <i class="bi bi-star"></i> Avaliar
-                            </a>
+                            </a> --}}
 
                             <a href="/filmes/{{ $filme->id }}/edit" class="btn btn-warning">
                                 Editar

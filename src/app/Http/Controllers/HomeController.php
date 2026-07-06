@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Actor;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\Person;
+use App\Models\Review;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -12,62 +14,70 @@ class HomeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
+    {
+        $atoresMaisPresentes = Actor::with(['person.images'])
+            ->withCount('movies')
+            ->orderByDesc('movies_count')
+            ->take(4)
+            ->get();
+
+        $filmesMaisAvaliados = Movie::has('reviews')
+            ->with('images')
+            ->withCount('reviews')
+            ->orderByDesc('reviews_count')
+            ->limit(3)
+            ->get();
+
+        $filmesMaisRecentes = Movie::with('images')
+            ->orderByDesc('data_lancamento')
+            ->limit(3)
+            ->get();
+
+        $avaliacoesMaisRecentes = Review::with(['user', 'movie'])
+            ->latest()
+            ->take(9)
+            ->get();
+
+        return view('home.index', compact(
+            'atoresMaisPresentes',
+            'filmesMaisRecentes',
+            'filmesMaisAvaliados',
+            'avaliacoesMaisRecentes'
+        ));
+    }
+
+    public function pesquisa(Request $request)
     {
         $busca = trim($request->input('busca', ''));
 
-        $filmes = collect();
-        $generos = collect();
-        $pessoas = collect();
+        $filmes = Movie::with('genres')
+            ->where('nome', 'ilike', "%{$busca}%")
+            ->orderBy('nome')
+            ->get();
 
-        if ($busca) {
+        $generos = Genre::where('nome', 'ilike', "%{$busca}%")
+            ->orderBy('nome')
+            ->get();
 
-            $filmes = Movie::with('genres')
-                ->where('nome', 'ilike', "%{$busca}%")
-                ->orderBy('nome')
-                ->get();
+        $pessoas = Person::with([
+            'actor',
+            'director',
+            'writer',
+            'producer'
+        ])
+            ->where('nome', 'ilike', "%{$busca}%")
+            ->orderBy('nome')
+            ->get();
 
-            $generos = Genre::where('nome', 'ilike', "%{$busca}%")
-                ->orderBy('nome')
-                ->get();
-
-            $pessoas = Person::with([
-                'actor',
-                'director',
-                'writer',
-                'producer'
-            ])
-                ->where('nome', 'ilike', "%{$busca}%")
-                ->orWhereHas('actor', function ($q) use ($busca) {
-                    $q->whereHas('person', fn($p) =>
-                    $p->where('nome', 'ilike', "%{$busca}%"));
-                })
-                ->orWhereHas('director', function ($q) use ($busca) {
-                    $q->whereHas('person', fn($p) =>
-                    $p->where('nome', 'ilike', "%{$busca}%"));
-                })
-                ->orWhereHas('writer', function ($q) use ($busca) {
-                    $q->whereHas('person', fn($p) =>
-                    $p->where('nome', 'ilike', "%{$busca}%"));
-                })
-                ->orWhereHas('producer', function ($q) use ($busca) {
-                    $q->whereHas('person', fn($p) =>
-                    $p->where('nome', 'ilike', "%{$busca}%"));
-                })
-                ->orderBy('nome')
-                ->get();
-        }
-
-        return view('home.index', compact(
+        return view('home.pesquisa', compact(
             'busca',
             'filmes',
             'generos',
             'pessoas'
         ));
     }
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
         //

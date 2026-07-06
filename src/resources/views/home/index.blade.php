@@ -14,79 +14,53 @@
     @if (request('busca'))
 
         <h4 style="margin: 0 2% 0 2%; border-bottom: 5px solid #a0d6fa; padding-bottom: 10px" class="mb-4">
-            <div class="mx-4">Resultados para <b>"{{ request('busca') }}"</b>:</div>
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="mx-4">Pesquisando por: <br> <b>"{{ request('busca') }}"</b>
+                </div>
+            </div>
         </h4>
 
+        <div class="mx-4">
+            <h5 class="mb-0">{{ $pessoas->count() + $filmes->count() }} resultado(s) encontrado(s)</h5>
+            <hr>
+        </div>
+
+
+        {{-- PESSOAS --}}
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mx-4">
+                <h3>Pessoas</h3>
+                <h5 class="mb-0">{{ $pessoas->count() }} resultado(s)</h5>
+            </div>
+
+
+            {{-- <div class="row row-cols-1 row-cols-md-4 mx-4 mt-4 g-1 "> --}}
+            @forelse($pessoas as $pessoa)
+                @include('partials.div-de-pessoas-pagina-de-busca')
+            @empty
+                <p>Nenhuma pessoa encontrada.</p>
+            @endforelse
+        </div>
+
+        <hr>
         {{-- FILMES --}}
         <div class="mb-5">
-            <h3 class="mx-4">Filmes</h3>
+            <div class="d-flex justify-content-between align-items-center mx-4">
+                <h3>Filmes</h3>
+                <h5 class="mb-0">{{ $filmes->count() }} resultado(s)</h5>
+            </div>
+
 
             @forelse($filmes as $filme)
-                <div class="card mb-3 mx-4">
-                    <div class="card-body">
-                        <h5>
-                            <a href="/filmes-p/{{ $filme->id }}">
-                                {{ $filme->nome }}
-                            </a>
-                        </h5>
-                        <p>
-                            @foreach ($filme->genres as $genero)
-                                <span class="badge bg-secondary">
-                                    {{ $genero->nome }}
-                                </span>
-                            @endforeach
-                        </p>
-                    </div>
-                </div>
+                @include('partials.div-de-filmes-pagina-de-busca')
             @empty
                 <p>Nenhum filme encontrado.</p>
             @endforelse
         </div>
 
-        {{-- PESSOAS --}}
-        <div class="mb-5">
-            <h3 class="mx-4">Pessoas</h3>
-
-            <div class="row row-cols-1 row-cols-md-4 mx-4 mt-4 g-1 ">
-                @forelse($pessoas as $pessoa)
-                    <div class="card mb-1">
-                        <div class="card-body">
-                            <h5>
-                                <a href="/pessoas/{{ $pessoa->id }}">
-                                    {{ $pessoa->nome }}
-                                </a>
-                            </h5>
-                            <p>
-                                @if ($pessoa->actor)
-                                    <span class="badge bg-primary">
-                                        Ator
-                                    </span>
-                                @endif
-                                @if ($pessoa->director)
-                                    <span class="badge bg-success">
-                                        Diretor
-                                    </span>
-                                @endif
-                                @if ($pessoa->writer)
-                                    <span class="badge bg-warning text-dark">
-                                        Escritor
-                                    </span>
-                                @endif
-                                @if ($pessoa->producer)
-                                    <span class="badge bg-danger">
-                                        Produtor
-                                    </span>
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                @empty
-                    <p>Nenhuma pessoa encontrada.</p>
-                @endforelse
-            </div>
-
         </div>
 
+        <hr>
         {{-- GÊNEROS --}}
         <div class="mb-5">
             <h3 class="mx-4">Gêneros</h3>
@@ -108,11 +82,37 @@
     </div>
 @else
     @include('partials.carousel')
-    @include('partials.cards-atores-home')
-    @include('partials.cards-filmes')
+
+    <div class="container mb-5">
+        <div class="row g-4">
+            @foreach ($filmesMaisAvaliados as $filme)
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    @include('partials.cards-filmes-home')
+                </div>
+            @endforeach
+
+        </div>
+    </div>
+
+
+    <div class="container mb-5">
+        <div class="row g-4">
+            @foreach ($atoresMaisPresentes as $ator)
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    @include('partials.cards-atores-home')
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    @include('partials.carousel-cards-avaliacoes-home')
+
 
     @endif
 
 
 
 @endsection
+
+@push('scripts')
+@endpush

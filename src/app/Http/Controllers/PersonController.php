@@ -8,6 +8,7 @@ use App\Models\Actor;
 use App\Models\Director;
 use App\Models\Person;
 use App\Models\Image;
+use App\Models\Movie;
 use App\Models\Producer;
 use App\Models\Writer;
 use Illuminate\Http\Request;
@@ -41,17 +42,18 @@ class PersonController extends Controller
 
         $dados = $request->validated();
         $profissoes = $request->input('profissoes');
-        // $fotoPrincipalIndex = $request->input('principal_index', 0);
+        $principalIndex = $request->input('principal_index', 0);
         $arquivos = $request->file('imagens', []);
         $caminhos = [];
         // Faz upload de todos os arquivos antes da transação
         foreach ($arquivos as $arquivo) {
-            $caminhos[] = $arquivo->store('imagens_pessoas', 'public');
+            $caminhos[] = $arquivo->store('imagens', 'public');
         }
         try {
-            DB::transaction(function () use ($dados, $caminhos, $profissoes) {
+            DB::transaction(function () use ($dados, $caminhos, $profissoes, $principalIndex, $request) {
 
                 $pessoa = Person::create($dados);
+
 
                 foreach ($caminhos as $i => $caminho) {
                     $imagem = Image::create([
@@ -59,7 +61,9 @@ class PersonController extends Controller
                         'nome' => 'Imagem de ' . $pessoa->nome,
                     ]);
 
-                    $pessoa->images()->attach($imagem->id);
+                    $pessoa->images()->attach($imagem->id, [
+                        'principal' => ($i === (int) $principalIndex),
+                    ]);
                 }
 
                 foreach ($profissoes as $profissao) {
@@ -91,6 +95,7 @@ class PersonController extends Controller
                             break;
                     }
                 }
+                $this->sincronizarVinculos($pessoa, $request->input('vinculos', []));
             });
         } catch (\Exception $e) {
             foreach ($caminhos as $caminho) {
@@ -108,6 +113,8 @@ class PersonController extends Controller
     public function show(string $id)
     {
         $pessoa = Person::with(['images'])->findOrFail($id);
+
+        $profissoes = [];
 
         if ($pessoa->actor) {
             $profissoes[] = 'Ator';
@@ -144,61 +151,140 @@ class PersonController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePessoaRequest $request, $id)
+    public function update(UpdatePessoaRequest $request, string $id)
     {
-        $pessoa = Person::with(['actor', 'director', 'writer', 'producer'])->findOrFail($id);
+        $pessoa = Person::with([
+            'actor',
+            'director',
+            'writer',
+            'producer',
+            'images'
+        ])->findOrFail($id);
 
-        $dados = $request->validated();
+        $arquivos = $request->file('imagens', []);
+        $caminhos = [];
 
-        DB::transaction(function () use ($pessoa, $dados) {
+        foreach ($arquivos as $arquivo) {
+            $caminhos[] = $arquivo->store('imagens', 'public');
+        }
 
-            $profissoes = $dados['profissoes'] ?? [];
+        try {
 
-            unset($dados['profissoes']);
+            DB::transaction(function () use ($pessoa, $request, $caminhos) {
 
-            $pessoa->update($dados);
+                $pessoa->update($request->validated());
 
-            // Ator
-            if (in_array('1', $profissoes)) {
-                Actor::firstOrCreate([
-                    'person_id' => $pessoa->id
-                ]);
-            } else {
-                $pessoa->actor?->delete();
+                $profissoes = $request->input('profissoes', []);
+
+                //  Atualiza imagem principal existente -----------------------
+
+                if ($request->filled('principal_imagem_id')) {
+
+                    $pessoa->images()->updateExistingPivot(
+                        $pessoa->images->pluck('id'),
+                        ['principal' => false]
+                    );
+
+                    $pessoa->images()->updateExistingPivot(
+                        $request->principal_imagem_id,
+                        ['principal' => true]
+                    );
+                }
+
+                // Adiciona novas imagens ---------------------------
+
+                if (!empty($caminhos)) {
+
+                    $principalIndex = $request->input('principal_index');
+
+                    // Se alguma nova imagem será principal,
+                    // desmarca todas as anteriores
+                    if ($principalIndex !== null) {
+
+                        $pessoa->images()->updateExistingPivot(
+                            $pessoa->images->pluck('id'),
+                            ['principal' => false]
+                        );
+                    }
+
+                    foreach ($caminhos as $i => $caminho) {
+
+                        $imagem = Image::create([
+                            'caminho' => $caminho,
+                            'nome' => 'Imagem de ' . $pessoa->nome
+                        ]);
+
+                        $pessoa->images()->attach($imagem->id, [
+                            'principal' => ($i === (int) $principalIndex)
+                        ]);
+                    }
+                }
+
+                //Profissões -----------------
+
+                if (in_array('1', $profissoes)) {
+                    Actor::firstOrCreate([
+                        'person_id' => $pessoa->id
+                    ]);
+                } else {
+                    $pessoa->actor?->delete();
+                }
+
+                if (in_array('2', $profissoes)) {
+                    Director::firstOrCreate([
+                        'person_id' => $pessoa->id
+                    ]);
+                } else {
+                    $pessoa->director?->delete();
+                }
+
+                if (in_array('3', $profissoes)) {
+                    Producer::firstOrCreate([
+                        'person_id' => $pessoa->id
+                    ]);
+                } else {
+                    $pessoa->producer?->delete();
+                }
+
+                if (in_array('4', $profissoes)) {
+                    Writer::firstOrCreate([
+                        'person_id' => $pessoa->id
+                    ]);
+                } else {
+                    $pessoa->writer?->delete();
+                }
+
+                // 1. Remover vínculos marcados
+                foreach ($request->input('remover_vinculos', []) as $relacao => $filmes) {
+                    if (!$pessoa->$relacao) {
+                        continue;
+                    }
+                    $pessoa->$relacao->movies()->detach($filmes);
+                }
+
+                // 2. Atualizar personagem dos atores existentes
+                foreach ($request->input('filmes_existentes', []) as $filmeId => $dados) {
+                    $pessoa->actor?->movies()->updateExistingPivot(
+                        $filmeId,
+                        ['papel' => $dados['personagem'] ?? null]
+                    );
+                }
+
+                // 3. Adicionar novos vínculos (mesmo método do store)
+                $this->sincronizarVinculos($pessoa, $request->input('vinculos', []));
+            });
+        } catch (\Exception $e) {
+
+            foreach ($caminhos as $caminho) {
+                Storage::disk('public')->delete($caminho);
             }
 
-            // Diretor
-            if (in_array('2', $profissoes)) {
-                Director::firstOrCreate([
-                    'person_id' => $pessoa->id
-                ]);
-            } else {
-                $pessoa->director?->delete();
-            }
-
-            // Produtor
-            if (in_array('3', $profissoes)) {
-                Producer::firstOrCreate([
-                    'person_id' => $pessoa->id
-                ]);
-            } else {
-                $pessoa->producer?->delete();
-            }
-
-            // Escritor
-            if (in_array('4', $profissoes)) {
-                Writer::firstOrCreate([
-                    'person_id' => $pessoa->id
-                ]);
-            } else {
-                $pessoa->writer?->delete();
-            }
-        });
+            return back()->with('erro', 'Erro ao atualizar a pessoa.');
+        }
 
         return redirect('/pessoas/' . $pessoa->id)
             ->with('sucesso', 'Pessoa atualizada!');
     }
-
     /**
      * Remove the specified resource from storage.
      */
@@ -219,8 +305,23 @@ class PersonController extends Controller
 
     public function show_public(string $id)
     {
-        $pessoa = Person::findOrFail($id);
-        return view('pessoas.show-public', compact('pessoa'));
+        $pessoa = Person::with(['images'])->findOrFail($id);
+
+        $profissoes = [];
+        if ($pessoa->actor) {
+            $profissoes[] = 'Ator';
+        }
+        if ($pessoa->director) {
+            $profissoes[] = 'Diretor';
+        }
+        if ($pessoa->producer) {
+            $profissoes[] = 'Produtor';
+        }
+        if ($pessoa->writer) {
+            $profissoes[] = 'Escritor';
+        }
+
+        return view('pessoas.show-public', compact('pessoa', 'profissoes'));
     }
 
     public function buscar(Request $request)
@@ -230,7 +331,7 @@ class PersonController extends Controller
         if (strlen($termo) < 2) {
             return response()->json([]);
         }
-        $pessoas = Person::with('images')->where('nome', 'ilike', "%{$termo}%")
+        $pessoas = Person::with('images', 'actor', 'director', 'writer', 'producer')->where('nome', 'ilike', "%{$termo}%")
             ->limit(8)
             ->get(['id', 'nome']);
 
@@ -238,16 +339,16 @@ class PersonController extends Controller
         return response()->json($pessoas->map(function ($p) use ($filmeId) {
             $vinculos = [];
             if ($filmeId) {
-                if ($p->actors?->filmes()->where('filme_id', $filmeId)->exists())
+                if ($p->actor?->movies()->where('movie_id', $filmeId)->exists())
                     $vinculos[] = 'ator';
 
-                if ($p->directors?->filmes()->where('filme_id', $filmeId)->exists())
+                if ($p->director?->movies()->where('movie_id', $filmeId)->exists())
                     $vinculos[] = 'diretor';
 
-                if ($p->producers?->filmes()->where('filme_id', $filmeId)->exists())
+                if ($p->producer?->movies()->where('movie_id', $filmeId)->exists())
                     $vinculos[] = 'produtor';
 
-                if ($p->writers?->filmes()->where('filme_id', $filmeId)->exists())
+                if ($p->writer?->movies()->where('movie_id', $filmeId)->exists())
                     $vinculos[] = 'escritor';
             }
 
@@ -274,5 +375,27 @@ class PersonController extends Controller
                 'profissoes' => $profissoes
             ];
         }));
+    }
+
+
+    // Método auxiliar privado — reutilizado no update()
+    private function sincronizarVinculos(Person $pessoa, array $vinculos): void
+    {
+        foreach ($vinculos as $v) {
+            $filmeId = $v['filme_id'] ?? null;
+            $filme = Movie::find($filmeId);
+            $tipo = $v['tipo'] ?? null;
+            $personagem = $v['personagem'] ?? null;
+            if (!$filme || !$tipo) continue;
+            match ($tipo) {
+                'ator' => $filme->actors()->syncWithoutDetaching([
+                    $pessoa->actor->id => ['papel' => $personagem]
+                ]),
+                'diretor' => $filme->directors()->syncWithoutDetaching([$pessoa->director->id]),
+                'produtor' => $filme->producers()->syncWithoutDetaching([$pessoa->producer->id]),
+                'escritor' => $filme->writers()->syncWithoutDetaching([$pessoa->writer->id]),
+                default => null,
+            };
+        }
     }
 }

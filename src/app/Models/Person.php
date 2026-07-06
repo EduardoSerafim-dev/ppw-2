@@ -42,9 +42,10 @@ class Person extends Model
         return $this->hasOne(Writer::class);
     }
 
-    public function images(): BelongsToMany
+    public function images()
     {
         return $this->belongsToMany(Image::class)
+            ->withPivot('principal')
             ->withTimestamps();
     }
 }

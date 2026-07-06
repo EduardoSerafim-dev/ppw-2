@@ -1,4 +1,4 @@
-<style>
+{{-- <style>
     .card-filme {
 
         width: 15%;
@@ -158,4 +158,37 @@
             </div>
         </a>
     </div>
+</div> --}}
+
+
+<div class="card h-100 shadow-sm">
+
+    @php
+        $poster = $filme->images->firstWhere('pivot.poster', true);
+    @endphp
+
+    @if ($poster)
+        <img src="{{ asset('storage/' . $poster->caminho) }}" class="card-img-top" alt="{{ $filme->nome }}"
+            title="{{ $filme->nome }}" style="height: 350px; object-fit: cover;">
+    @else
+        <img src="{{ asset('imagens/sem-poster.jpg') }}" class="card-img-top" alt="Sem poster" title="Sem poster"
+            style="height: 350px; object-fit: cover;">
+    @endif
+
+    <div class="card-body d-flex flex-column">
+
+        <h5 class="card-title">
+            {{ $filme->nome }}
+        </h5>
+
+        <p class="card-text">
+            {{ \Illuminate\Support\Str::limit($filme->sinopse, 140) }}
+        </p>
+
+        <a href="/filmes-p/{{ $filme->id }}" class="btn btn-outline-dark mt-auto">
+            Ver detalhes
+        </a>
+
+    </div>
+
 </div>
