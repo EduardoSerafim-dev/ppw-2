@@ -2,10 +2,12 @@
 
 Projeto **full-stack** desenvolvido para a disciplina de **Programação para Web 2**.
 
+## "CineReview"
+
 Consiste em um **sistema de indexação de filmes** que permite a usuários comuns visualizarem informações dos filmes armazenados no sistema, assim como de pessoas(atores, diretores, escritores e produtores) e estúdios relacionados, seja navegando por seções ou utilizando a funcionalidade de pesquisa. Para usuários cadastrados é possível avaliar filmes, atribuindo nota e descrição.
 Admnistradores podem gerenciar(adicionar, editar, visualizar ou excluir) filmes, pessoas e estúdios. 
 
-Consulte o diagrama entidade-relacionamento do banco de dados e a estrutura de diretórios do projeto na [Wiki]()
+Consulte o **diagrama entidade-relacionamento** do banco de dados e a **estrutura de diretórios** do projeto na [Wiki](https://github.com/EduardoSerafim-dev/ppw-2/wiki)
 
 A aplicação utiliza **Laravel**, **PHP**, **Nginx** e **PostgreSQL**, sendo executada através de containers Docker.
 
