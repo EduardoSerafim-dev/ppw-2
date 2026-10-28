@@ -1,6 +1,6 @@
 # PPW 2
 
-Projeto desenvolvido para a disciplina de **Programação para Web 2**.
+Projeto **_full-stack_** desenvolvido para a disciplina de **Programação para Web 2**.
 
 A aplicação utiliza **Laravel**, **PHP**, **Nginx** e **PostgreSQL**, sendo executada através de containers Docker.
 
